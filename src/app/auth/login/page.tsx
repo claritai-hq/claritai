@@ -1,10 +1,27 @@
 'use client'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Zap } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { Zap, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setError(error.message); setLoading(false); return }
+    router.push('/dashboard')
+    router.refresh()
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
       <div className="w-full max-w-sm">
@@ -17,38 +34,28 @@ export default function LoginPage() {
         <div className="rounded-2xl p-8" style={{ background: '#12121a', border: '1px solid #1e1e2e' }}>
           <h1 className="text-xl font-bold text-white mb-1">Welcome back</h1>
           <p className="text-sm mb-6" style={{ color: '#64748b' }}>Sign in to your account</p>
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); router.push('/dashboard') }}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: '#64748b' }}>Email</label>
-              <input
-                type="email"
-                placeholder="you@company.com"
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required
                 className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/40"
-                style={{ background: '#0a0a0f', border: '1px solid #1e1e2e' }}
-              />
+                style={{ background: '#0a0a0f', border: '1px solid #1e1e2e' }} />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: '#64748b' }}>Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
                 className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/40"
-                style={{ background: '#0a0a0f', border: '1px solid #1e1e2e' }}
-              />
+                style={{ background: '#0a0a0f', border: '1px solid #1e1e2e' }} />
             </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ background: '#3b82f6' }}
-            >
-              Sign in
+            {error && <p className="text-xs" style={{ color: '#ef4444' }}>{error}</p>}
+            <button type="submit" disabled={loading}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ background: '#3b82f6' }}>
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Signing in...</> : 'Sign in'}
             </button>
           </form>
           <p className="text-sm text-center mt-6" style={{ color: '#64748b' }}>
-            No account?{' '}
-            <Link href="/auth/signup" className="font-medium" style={{ color: '#3b82f6' }}>
-              Sign up free
-            </Link>
+            No account?{' '}<Link href="/auth/signup" className="font-medium" style={{ color: '#3b82f6' }}>Sign up free</Link>
           </p>
         </div>
       </div>
